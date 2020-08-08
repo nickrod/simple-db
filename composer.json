@@ -1,0 +1,22 @@
+{
+    "name": "nickrod/simpledb",
+    "description": "Simple db library",
+    "keywords": ["pager", "paging", "paginate", "pagination"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "nickrod",
+            "email": "nickrod@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "php": "^7.0"
+    },
+    "autoload": {
+        "psr-4": { "simpledb\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "simpledb\\tests\\": "tests/" }
+    }
+}
