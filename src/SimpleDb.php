@@ -6,7 +6,7 @@ declare(strict_types=1);
 
 //
 
-namespace simpledb;
+namespace openorder\database;
 
 //
 
@@ -583,7 +583,7 @@ class SimpleDb implements SimpleDbInterface
               if ($type_value === 'index_gt') $index_value = '>';
               if ($type_value === 'index_lt') $index_value = '<';
               if (!isset($arr['index'])) $arr['index'] = null;
-              $arr['index'] .= (($index_count === 0) ? '' : ' AND ') . $key . ' ' . $index_value . '= :' . $key;
+              $arr['index'] .= (($index_count === 0) ? '' : ' AND ') . ((isset($column[$key]['join']) && $column[$key]['join'] === true && isset($column_value['join'][$key]) && is_string($column_value['join'][$key]) && trim($column_value['join'][$key]) !== '') ? $column_value['join'][$key] . '.' : '') . $key . ' ' . $index_value . '= :' . $key;
               $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
               $index_count++;
             }
