@@ -6,7 +6,7 @@ declare(strict_types=1);
 
 //
 
-namespace openorder\database;
+namespace simpledb;
 
 //
 
@@ -527,6 +527,13 @@ class SimpleDb implements SimpleDbInterface
 
   //
 
+  private static function replaceKey(string $str): string
+  {
+    return strtr($str, ['__' => '.']);
+  }
+
+  //
+
   private static function column(array &$type, array &$column, array &$column_value, ?string $table = null, ?string $table_key = null): array
   {
     $arr = [];
@@ -583,7 +590,7 @@ class SimpleDb implements SimpleDbInterface
               if ($type_value === 'index_gt') $index_value = '>';
               if ($type_value === 'index_lt') $index_value = '<';
               if (!isset($arr['index'])) $arr['index'] = null;
-              $arr['index'] .= (($index_count === 0) ? '' : ' AND ') . ((isset($column[$key]['join']) && $column[$key]['join'] === true && isset($column_value['join'][$key]) && is_string($column_value['join'][$key]) && trim($column_value['join'][$key]) !== '') ? $column_value['join'][$key] . '.' : '') . $key . ' ' . $index_value . '= :' . $key;
+              $arr['index'] .= (($index_count === 0) ? '' : ' AND ') . self::replaceKey($key) . ' ' . $index_value . '= :' . $key;
               $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
               $index_count++;
             }
@@ -630,7 +637,7 @@ class SimpleDb implements SimpleDbInterface
             {
               $value = self::escapeSearch($value) . '%';
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($search_count === 0) ? '' : ' OR ') . $key . ' LIKE = :' . $key;
+              $arr[$type_value] .= (($search_count === 0) ? '' : ' OR ') . self::replaceKey($key) . ' LIKE = :' . $key;
               $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
               $search_count++;
             }
@@ -645,7 +652,7 @@ class SimpleDb implements SimpleDbInterface
             {
               $in_val = self::arrayToInt($value);
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($filter_count === 0) ? '' : ' AND ') . $key . ' IN (' . (($in_val !== '') ? $in_val : '0') . ')';
+              $arr[$type_value] .= (($filter_count === 0) ? '' : ' AND ') . self::replaceKey($key) . ' IN (' . (($in_val !== '') ? $in_val : '0') . ')';
               $filter_count++;
             }
             else
@@ -655,10 +662,10 @@ class SimpleDb implements SimpleDbInterface
           }
           elseif ($type_value === 'join')
           {
-            if (is_string($value) && trim($value) !== '' && isset($table) && isset($table_key))
+            if (is_string($value) && trim($value) !== '' && (strtoupper($value) === 'INNER' || strtoupper($value) === 'LEFT') && isset($table) && isset($table_key))
             {
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($join_count === 0) ? '' : ' ') . 'INNER JOIN ' . $value . ' ON ' . $table . '.' . $table_key . ' = ' . $value . '.' . $key;
+              $arr[$type_value] .= (($join_count === 0) ? '' : ' ') . $value . ' JOIN ' . strtok($key, '__') . ' ON ' . $table . '.' . $table_key . ' = ' . self::replaceKey($key);
               $join_count++;
             }
             else
@@ -671,7 +678,7 @@ class SimpleDb implements SimpleDbInterface
             if (is_string($value) && (strtoupper($value) === 'ASC' || strtoupper($value) === 'DESC'))
             {
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($order_by_count === 0) ? '' : ', ') . $key . ' ' . strtoupper($value);
+              $arr[$type_value] .= (($order_by_count === 0) ? '' : ', ') . self::replaceKey($key) . ' ' . strtoupper($value);
               $order_by_count++;
             }
             else
