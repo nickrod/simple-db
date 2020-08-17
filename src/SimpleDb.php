@@ -569,7 +569,7 @@ class SimpleDb implements SimpleDbInterface
 
           if ($type_value === 'key')
           {
-            if (is_string($value) || is_int($value) || is_bool($value))
+            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value))
             {
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
               $arr[$type_value] .= (($key_count === 0) ? '' : ' AND ') . $key . ' = :' . $key;
@@ -583,7 +583,7 @@ class SimpleDb implements SimpleDbInterface
           }
           elseif ($type_value === 'index' || $type_value === 'index_not' || $type_value === 'index_gt' || $type_value === 'index_lt')
           {
-            if (is_string($value) || is_int($value) || is_bool($value) || is_null($value))
+            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value) || is_null($value))
             {
               if ($type_value === 'index') $index_value = '';
               if ($type_value === 'index_not') $index_value = '!';
@@ -601,9 +601,16 @@ class SimpleDb implements SimpleDbInterface
           }
           elseif ($type_value === 'allowed')
           {
-            if (is_string($value) || is_int($value) || is_bool($value) || is_null($value))
+            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value) || is_null($value))
             {
-              if (is_string($value) && trim($value) === '')
+              if (is_string($value) && (trim($value) === '' || trim($value) === '0'))
+              {
+                $value = null;
+              }
+
+              //
+
+              if ((is_int($value) || is_float($value)) && !($value > 0))
               {
                 $value = null;
               }
