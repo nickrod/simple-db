@@ -583,7 +583,7 @@ class SimpleDb implements SimpleDbInterface
           }
           elseif ($type_value === 'index' || $type_value === 'index_not' || $type_value === 'index_gt' || $type_value === 'index_lt')
           {
-            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value) || is_null($value))
+            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value))
             {
               if ($type_value === 'index') $index_value = '';
               if ($type_value === 'index_not') $index_value = '!';
