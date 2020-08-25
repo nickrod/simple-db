@@ -685,7 +685,7 @@ class SimpleDb implements SimpleDbInterface
             if (is_string($value) && (strtoupper($value) === 'ASC' || strtoupper($value) === 'DESC'))
             {
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($order_by_count === 0) ? '' : ', ') . self::replaceKey($key) . ' ' . strtoupper($value);
+              $arr[$type_value] .= (($order_by_count === 0) ? '' : ', ') . self::replaceKey($key) . ' IS NULL, ' . self::replaceKey($key) . ' ' . strtoupper($value);
               $order_by_count++;
             }
             else
