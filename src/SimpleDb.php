@@ -21,7 +21,7 @@ class SimpleDb implements SimpleDbInterface
     $table_key = (isset($this::TABLE_KEY)) ? $this::TABLE_KEY : null;
     $column_value = get_object_vars($this);
     $column_type = ['allowed'];
-    $column_key = self::column($column_type, $column, $column_value, $table, $table_key);
+    $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
 
     //
 
@@ -47,7 +47,7 @@ class SimpleDb implements SimpleDbInterface
     $table = (isset($this::TABLE)) ? $this::TABLE : null;
     $column_value = get_object_vars($this);
     $column_type = ['key', 'allowed'];
-    $column_key = self::column($column_type, $column, $column_value, $table);
+    $column_key = self::&column($column_type, $column, $column_value, $table);
 
     //
 
@@ -66,7 +66,7 @@ class SimpleDb implements SimpleDbInterface
     $table = (isset($this::TABLE)) ? $this::TABLE : null;
     $column_value = get_object_vars($this);
     $column_type = ['key'];
-    $column_key = self::column($column_type, $column, $column_value, $table);
+    $column_key = self::&column($column_type, $column, $column_value, $table);
 
     //
 
@@ -106,7 +106,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
@@ -120,17 +120,11 @@ class SimpleDb implements SimpleDbInterface
     {
       $statement = $pdo->prepare('SELECT ' . $table . '.* FROM ' . $table . $join . ' WHERE ' . $column_key['index'] . ' LIMIT 1');
       $statement->execute($column_key['value']);
+      $return_object = $statement->fetchObject(static::class);
 
       //
 
-      if ($retObject = $statement->fetchObject(static::class))
-      {
-        return $retObject;
-      }
-      else
-      {
-        return null;
-      }
+      return ((isset($return_object) && $return_object !== false) ? $return_object : null);
     }
     else
     {
@@ -140,12 +134,13 @@ class SimpleDb implements SimpleDbInterface
 
   // get list of objects
 
-  public static function getList(\PDO $pdo, array $option): ?array
+  public static function &getList(\PDO $pdo, array $option, bool $assoc = false): ?array
   {
     $column = (isset((static::class)::COLUMN)) ? (static::class)::COLUMN : [];
     $table = (isset((static::class)::TABLE)) ? (static::class)::TABLE : null;
     $table_key = (isset((static::class)::TABLE_KEY)) ? (static::class)::TABLE_KEY : null;
     $limit = (isset($option['limit'])) ? (int) $option['limit'] : 100;
+    $limit = ($limit > 10000) ? 10000 : $limit;
     $offset = (isset($option['offset'])) ? (int) $option['offset'] : 0;
     $distinct = (isset($option['distinct'])) ? (bool) $option['distinct'] : false;
     $column_type = $column_value = $column_key = [];
@@ -218,7 +213,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
@@ -229,7 +224,7 @@ class SimpleDb implements SimpleDbInterface
     $join = (isset($column_key['join'])) ? ' ' . $column_key['join'] : '';
     $join = ($distinct === true && isset($table) && isset($table_key)) ? ' INNER JOIN (SELECT ' . $table . '.' . $table_key . ' FROM' . $join . ' GROUP BY ' . $table . '.' . $table_key . ') self_join_' . $table . ' ON ' . $table . '.' . $table_key . ' = self_join_' . $table . '.' . $table_key : $join;
     $order_by = (isset($column_key['order_by'])) ? ' ORDER BY ' . $column_key['order_by'] : '';
-    $statement = null;
+    $statement = $return_object = null;
 
     //
 
@@ -244,13 +239,21 @@ class SimpleDb implements SimpleDbInterface
       {
         $statement = $pdo->query('SELECT ' . $table . '.* FROM ' . $table . $join . $order_by . ' LIMIT ' . $limit . ' OFFSET ' . $offset);
       }
-    }
 
-    //
+      //
 
-    if (isset($statement) && $retObject = $statement->fetchAll(\PDO::FETCH_CLASS, static::class))
-    {
-      return $retObject;
+      if ($assoc === false)
+      {
+        $return_object = $statement->fetchAll(\PDO::FETCH_CLASS, static::class)
+      }
+      else
+      {
+        $return_object = $statement->fetchAll(\PDO::FETCH_ASSOC)
+      }
+
+      //
+
+      return ((isset($return_object) && $return_object !== false && $return_object !== []) ? $return_object : null);
     }
     else
     {
@@ -287,13 +290,13 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
 
     $join = (isset($column_key['join'])) ? ' ' . $column_key['join'] : '';
-    $statement = null;
+    $statement = $return_value = null;
 
     //
 
@@ -301,10 +304,11 @@ class SimpleDb implements SimpleDbInterface
     {
       $statement = $pdo->prepare('SELECT 1 FROM ' . $table . $join . ' WHERE ' . $column_key['index'] . ' LIMIT 1');
       $statement->execute($column_key['value']);
+      $return_value = $statement->fetchColumn();
 
       //
 
-      return (bool) $statement->fetchColumn();
+      return ((isset($return_value) && $return_value !== false) ? (bool) $return_value : false);
     }
     else
     {
@@ -382,7 +386,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
@@ -392,7 +396,7 @@ class SimpleDb implements SimpleDbInterface
     $filter = (isset($column_key['filter'])) ? ' AND ' . $column_key['filter'] : '';
     $join = (isset($column_key['join'])) ? ' ' . $column_key['join'] : '';
     $join = ($distinct === true && isset($table) && isset($table_key)) ? ' INNER JOIN (SELECT ' . $table . '.' . $table_key . ' FROM' . $join . ' GROUP BY ' . $table . '.' . $table_key . ') self_join_' . $table . ' ON ' . $table . '.' . $table_key . ' = self_join_' . $table . '.' . $table_key : $join;
-    $statement = null;
+    $statement = $return_value = null;
 
     //
 
@@ -407,11 +411,19 @@ class SimpleDb implements SimpleDbInterface
       {
         $statement = $pdo->query('SELECT COUNT(*) AS total FROM ' . $table . $join);
       }
+
+      //
+
+      $return_value = $statement->fetchColumn();
+
+      //
+
+      return ((isset($return_value) && $return_value !== false) ? (int) $return_value : 0);
     }
-
-    //
-
-    return (int) ((isset($statement)) ? $statement->fetchColumn() : null);
+    else
+    {
+      return 0;
+    }
   }
 
   // import csv
@@ -534,7 +546,7 @@ class SimpleDb implements SimpleDbInterface
 
   //
 
-  private static function column(array &$type, array &$column, array &$column_value, ?string $table = null, ?string $table_key = null): array
+  private static function &column(array &$type, array &$column, array &$column_value, ?string $table = null, ?string $table_key = null): array
   {
     $arr = [];
     $index_value = '';
