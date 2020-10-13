@@ -18,10 +18,10 @@ class SimpleDb implements SimpleDbInterface
   {
     $column = (isset($this::COLUMN)) ? $this::COLUMN : [];
     $table = (isset($this::TABLE)) ? $this::TABLE : null;
-    $table_key = (isset($this::TABLE_KEY)) ? $this::TABLE_KEY : null;
+    $table_seq = (isset($this::TABLE_SEQ)) ? $this::TABLE_SEQ : null;
     $column_value = get_object_vars($this);
     $column_type = ['allowed'];
-    $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
+    $column_key = self::&column($column_type, $column, $column_value, $table);
 
     //
 
@@ -32,9 +32,9 @@ class SimpleDb implements SimpleDbInterface
 
       // get last inserted id for auto increment
 
-      if (isset($table_key))
+      if (isset($table_seq))
       {
-        $this->setId((int) $pdo->lastInsertId(($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') ? $table . '_' . $table_key . '_seq' : null));
+        $this->setId((int) $pdo->lastInsertId(($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') ? $table_seq : null));
       }
     }
   }
