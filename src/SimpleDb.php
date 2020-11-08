@@ -21,7 +21,7 @@ class SimpleDb implements SimpleDbInterface
     $table_seq = (isset($this::TABLE_SEQ)) ? $this::TABLE_SEQ : null;
     $column_value = get_object_vars($this);
     $column_type = ['allowed'];
-    $column_key = self::&column($column_type, $column, $column_value, $table);
+    $column_key = &self::column($column_type, $column, $column_value, $table);
 
     //
 
@@ -47,7 +47,7 @@ class SimpleDb implements SimpleDbInterface
     $table = (isset($this::TABLE)) ? $this::TABLE : null;
     $column_value = get_object_vars($this);
     $column_type = ['key', 'allowed'];
-    $column_key = self::&column($column_type, $column, $column_value, $table);
+    $column_key = &self::column($column_type, $column, $column_value, $table);
 
     //
 
@@ -66,7 +66,7 @@ class SimpleDb implements SimpleDbInterface
     $table = (isset($this::TABLE)) ? $this::TABLE : null;
     $column_value = get_object_vars($this);
     $column_type = ['key'];
-    $column_key = self::&column($column_type, $column, $column_value, $table);
+    $column_key = &self::column($column_type, $column, $column_value, $table);
 
     //
 
@@ -106,7 +106,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
@@ -213,7 +213,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
@@ -290,7 +290,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
@@ -386,7 +386,7 @@ class SimpleDb implements SimpleDbInterface
 
     if ($column_value !== [])
     {
-      $column_key = self::&column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
     }
 
     //
