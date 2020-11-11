@@ -16,9 +16,9 @@ class SimpleDb implements SimpleDbInterface
 
   public function save(\PDO $pdo): void
   {
-    $column = (isset($this::COLUMN)) ? $this::COLUMN : [];
-    $table = (isset($this::TABLE)) ? $this::TABLE : null;
-    $table_seq = (isset($this::TABLE_SEQ)) ? $this::TABLE_SEQ : null;
+    $column = (defined(get_class($this) . '::COLUMN')) ? $this::COLUMN : [];
+    $table = (defined(get_class($this) . '::TABLE')) ? $this::TABLE : null;
+    $table_seq = (defined(get_class($this) . '::TABLE_SEQ')) ? $this::TABLE_SEQ : null;
     $column_value = get_object_vars($this);
     $column_type = ['allowed'];
     $column_key = &self::column($column_type, $column, $column_value, $table);
@@ -43,8 +43,8 @@ class SimpleDb implements SimpleDbInterface
 
   public function edit(\PDO $pdo): void
   {
-    $column = (isset($this::COLUMN)) ? $this::COLUMN : [];
-    $table = (isset($this::TABLE)) ? $this::TABLE : null;
+    $column = (defined(get_class($this) . '::COLUMN')) ? $this::COLUMN : [];
+    $table = (defined(get_class($this) . '::TABLE')) ? $this::TABLE : null;
     $column_value = get_object_vars($this);
     $column_type = ['key', 'allowed'];
     $column_key = &self::column($column_type, $column, $column_value, $table);
@@ -62,8 +62,8 @@ class SimpleDb implements SimpleDbInterface
 
   public function remove(\PDO $pdo): void
   {
-    $column = (isset($this::COLUMN)) ? $this::COLUMN : [];
-    $table = (isset($this::TABLE)) ? $this::TABLE : null;
+    $column = (defined(get_class($this) . '::COLUMN')) ? $this::COLUMN : [];
+    $table = (defined(get_class($this) . '::TABLE')) ? $this::TABLE : null;
     $column_value = get_object_vars($this);
     $column_type = ['key'];
     $column_key = &self::column($column_type, $column, $column_value, $table);
@@ -81,9 +81,9 @@ class SimpleDb implements SimpleDbInterface
 
   public static function getObject(\PDO $pdo, array $option): ?object
   {
-    $column = (isset((static::class)::COLUMN)) ? (static::class)::COLUMN : [];
-    $table = (isset((static::class)::TABLE)) ? (static::class)::TABLE : null;
-    $table_key = (isset((static::class)::TABLE_KEY)) ? (static::class)::TABLE_KEY : null;
+    $column = (defined(static::class . '::COLUMN')) ? (static::class)::COLUMN : [];
+    $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
+    $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
     $column_type = $column_value = $column_key = [];
 
     //
@@ -136,9 +136,9 @@ class SimpleDb implements SimpleDbInterface
 
   public static function &getList(\PDO $pdo, array $option, bool $assoc = false): ?array
   {
-    $column = (isset((static::class)::COLUMN)) ? (static::class)::COLUMN : [];
-    $table = (isset((static::class)::TABLE)) ? (static::class)::TABLE : null;
-    $table_key = (isset((static::class)::TABLE_KEY)) ? (static::class)::TABLE_KEY : null;
+    $column = (defined(static::class . '::COLUMN')) ? (static::class)::COLUMN : [];
+    $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
+    $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
     $limit = (isset($option['limit'])) ? (int) $option['limit'] : 100;
     $limit = ($limit > 10000) ? 10000 : $limit;
     $offset = (isset($option['offset'])) ? (int) $option['offset'] : 0;
@@ -244,11 +244,11 @@ class SimpleDb implements SimpleDbInterface
 
       if ($assoc === false)
       {
-        $return_object = $statement->fetchAll(\PDO::FETCH_CLASS, static::class)
+        $return_object = $statement->fetchAll(\PDO::FETCH_CLASS, static::class);
       }
       else
       {
-        $return_object = $statement->fetchAll(\PDO::FETCH_ASSOC)
+        $return_object = $statement->fetchAll(\PDO::FETCH_ASSOC);
       }
 
       //
@@ -265,9 +265,9 @@ class SimpleDb implements SimpleDbInterface
 
   public static function exists(\PDO $pdo, array $option): bool
   {
-    $column = (isset((static::class)::COLUMN)) ? (static::class)::COLUMN : [];
-    $table = (isset((static::class)::TABLE)) ? (static::class)::TABLE : null;
-    $table_key = (isset((static::class)::TABLE_KEY)) ? (static::class)::TABLE_KEY : null;
+    $column = (defined(static::class . '::COLUMN')) ? (static::class)::COLUMN : [];
+    $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
+    $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
     $column_type = $column_value = $column_key = [];
 
     //
@@ -320,9 +320,9 @@ class SimpleDb implements SimpleDbInterface
 
   public static function total(\PDO $pdo, array $option): int
   {
-    $column = (isset((static::class)::COLUMN)) ? (static::class)::COLUMN : [];
-    $table = (isset((static::class)::TABLE)) ? (static::class)::TABLE : null;
-    $table_key = (isset((static::class)::TABLE_KEY)) ? (static::class)::TABLE_KEY : null;
+    $column = (defined(static::class . '::COLUMN')) ? (static::class)::COLUMN : [];
+    $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
+    $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
     $distinct = (isset($option['distinct'])) ? (bool) $option['distinct'] : false;
     $column_type = $column_value = $column_key = [];
 
@@ -465,17 +465,21 @@ class SimpleDb implements SimpleDbInterface
           {
             if ($data = array_combine($header, $data))
             {
+              $class_object = static::class;
+
+              //
+
               if ($type === 'save')
               {
-                (new static::class($data))->save($pdo);
+                (new $class_object($data))->save($pdo);
               }
               elseif ($type === 'edit')
               {
-                (new static::class($data))->edit($pdo);
+                (new $class_object($data))->edit($pdo);
               }
               elseif ($type === 'remove')
               {
-                (new static::class($data))->remove($pdo);
+                (new $class_object($data))->remove($pdo);
               }
             }
           }
