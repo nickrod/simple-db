@@ -626,7 +626,7 @@ class SimpleDb implements SimpleDbInterface
 
               //
 
-              if ((is_int($value) || is_float($value)) && !($value > 0))
+              if ((is_int($value) || is_float($value)) && !($value >= 0))
               {
                 $value = null;
               }
