@@ -19,9 +19,8 @@ class SimpleDb implements SimpleDbInterface
     $column = (defined(get_class($this) . '::COLUMN')) ? $this::COLUMN : [];
     $table = (defined(get_class($this) . '::TABLE')) ? $this::TABLE : null;
     $table_seq = (defined(get_class($this) . '::TABLE_SEQ')) ? $this::TABLE_SEQ : null;
-    $column_value = get_object_vars($this);
-    $column_type = ['allowed'];
-    $column_key = &self::column($column_type, $column, $column_value, $table);
+    $column_value['allowed'] = get_object_vars($this);
+    $column_key = &self::column($column, $column_value, $table);
 
     //
 
@@ -45,9 +44,8 @@ class SimpleDb implements SimpleDbInterface
   {
     $column = (defined(get_class($this) . '::COLUMN')) ? $this::COLUMN : [];
     $table = (defined(get_class($this) . '::TABLE')) ? $this::TABLE : null;
-    $column_value = get_object_vars($this);
-    $column_type = ['key', 'allowed'];
-    $column_key = &self::column($column_type, $column, $column_value, $table);
+    $column_value['key'] = $column_value['allowed'] = get_object_vars($this);
+    $column_key = &self::column($column, $column_value, $table);
 
     //
 
@@ -64,9 +62,8 @@ class SimpleDb implements SimpleDbInterface
   {
     $column = (defined(get_class($this) . '::COLUMN')) ? $this::COLUMN : [];
     $table = (defined(get_class($this) . '::TABLE')) ? $this::TABLE : null;
-    $column_value = get_object_vars($this);
-    $column_type = ['key'];
-    $column_key = &self::column($column_type, $column, $column_value, $table);
+    $column_value['key'] = get_object_vars($this);
+    $column_key = &self::column($column, $column_value, $table);
 
     //
 
@@ -84,29 +81,27 @@ class SimpleDb implements SimpleDbInterface
     $column = (defined(static::class . '::COLUMN')) ? (static::class)::COLUMN : [];
     $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
     $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
-    $column_type = $column_value = $column_key = [];
+    $column_value = $column_key = [];
 
     //
 
     if (isset($option['index']))
     {
-      $column_type[] = 'index';
-      $column_value += $option['index'];
+      $column_value['index'] = $option['index'];
     }
 
     //
 
     if (isset($option['join']))
     {
-      $column_type[] = 'join';
-      $column_value += $option['join'];
+      $column_value['join'] = $option['join'];
     }
 
     //
 
     if ($column_value !== [])
     {
-      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column, $column_value, $table, $table_key);
     }
 
     //
@@ -143,77 +138,69 @@ class SimpleDb implements SimpleDbInterface
     $limit = ($limit > 10000) ? 10000 : $limit;
     $offset = (isset($option['offset'])) ? (int) $option['offset'] : 0;
     $distinct = (isset($option['distinct'])) ? (bool) $option['distinct'] : false;
-    $column_type = $column_value = $column_key = [];
+    $column_value = $column_key = [];
 
     //
 
     if (isset($option['index']))
     {
-      $column_type[] = 'index';
-      $column_value += $option['index'];
+      $column_value['index'] = $option['index'];
     }
 
     //
 
     if (isset($option['index_not']))
     {
-      $column_type[] = 'index_not';
-      $column_value += $option['index_not'];
+      $column_value['index_not'] = $option['index_not'];
     }
 
     //
 
     if (isset($option['index_gt']))
     {
-      $column_type[] = 'index_gt';
-      $column_value += $option['index_gt'];
+      $column_value['index_gt'] = $option['index_gt'];
     }
 
     //
 
     if (isset($option['index_lt']))
     {
-      $column_type[] = 'index_lt';
-      $column_value += $option['index_lt'];
+      $column_value['index_lt'] = $option['index_lt'];
     }
 
     //
 
     if (isset($option['search']))
     {
-      $column_type[] = 'search';
-      $column_value += $option['search'];
+      $column_value['search'] = $option['search'];
     }
 
     //
 
     if (isset($option['filter']))
     {
-      $column_type[] = 'filter';
-      $column_value += $option['filter'];
+      $column_value['filter'] = $option['filter'];
     }
 
     //
 
     if (isset($option['join']))
     {
-      $column_type[] = 'join';
-      $column_value += $option['join'];
+      $column_value['join'] = $option['join'];
     }
 
     //
 
     if (isset($option['order_by']))
     {
-      $column_type[] = 'order_by';
-      $column_value += $option['order_by'];
+      $column_value['order_by'] = $option['order_by'];
     }
 
     //
 
     if ($column_value !== [])
     {
-      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column, $column_value, $table, $table_key);
     }
 
     //
@@ -222,7 +209,6 @@ class SimpleDb implements SimpleDbInterface
     $search = (isset($column_key['search'])) ? ' AND (' . $column_key['search'] . ')' : '';
     $filter = (isset($column_key['filter'])) ? ' AND ' . $column_key['filter'] : '';
     $join = (isset($column_key['join'])) ? ' ' . $column_key['join'] : '';
-    $join = ($distinct === true && isset($table) && isset($table_key)) ? ' INNER JOIN (SELECT ' . $table . '.' . $table_key . ' FROM' . $join . ' GROUP BY ' . $table . '.' . $table_key . ') self_join_' . $table . ' ON ' . $table . '.' . $table_key . ' = self_join_' . $table . '.' . $table_key : $join;
     $order_by = (isset($column_key['order_by'])) ? ' ORDER BY ' . $column_key['order_by'] : '';
     $statement = $return_object = null;
 
@@ -232,7 +218,17 @@ class SimpleDb implements SimpleDbInterface
     {
       if ($index !== '' || $search !== '' || $filter !== '')
       {
-        $statement = $pdo->prepare('SELECT ' . $table . '.* FROM ' . $table . $join . ' WHERE TRUE' . $index . $search . $filter . $order_by . ' LIMIT ' . $limit . ' OFFSET ' . $offset);
+        if ($distinct === true)
+        {
+          $statement = $pdo->prepare('SELECT ' . $table . '.* FROM ' . $table . ' WHERE ' . $table . '.' . $table_key . ' IN (SELECT ' . $table . '.' . $table_key . ' FROM ' . $table . $join . ' WHERE TRUE' . $index . $search . $filter . ' GROUP BY ' . $table . '.' . $table_key . ')' . $order_by . ' LIMIT ' . $limit . ' OFFSET ' . $offset);
+        }
+        else
+        {
+          $statement = $pdo->prepare('SELECT ' . $table . '.* FROM ' . $table . $join . ' WHERE TRUE' . $index . $search . $filter . $order_by . ' LIMIT ' . $limit . ' OFFSET ' . $offset);
+        }
+
+        //
+
         $statement->execute($column_key['value']);
       }
       else
@@ -253,7 +249,11 @@ class SimpleDb implements SimpleDbInterface
 
       //
 
-      return ((isset($return_object) && $return_object !== false && $return_object !== []) ? $return_object : null);
+      $return_object = ((isset($return_object) && $return_object !== false && $return_object !== []) ? $return_object : null);
+
+      //
+
+      return $return_object;
     }
     else
     {
@@ -268,29 +268,27 @@ class SimpleDb implements SimpleDbInterface
     $column = (defined(static::class . '::COLUMN')) ? (static::class)::COLUMN : [];
     $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
     $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
-    $column_type = $column_value = $column_key = [];
+    $column_value = $column_key = [];
 
     //
 
     if (isset($option['index']))
     {
-      $column_type[] = 'index';
-      $column_value += $option['index'];
+      $column_value['index'] = $option['index'];
     }
 
     //
 
     if (isset($option['join']))
     {
-      $column_type[] = 'join';
-      $column_value += $option['join'];
+      $column_value['join'] = $option['join'];
     }
 
     //
 
     if ($column_value !== [])
     {
-      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column, $column_value, $table, $table_key);
     }
 
     //
@@ -324,69 +322,62 @@ class SimpleDb implements SimpleDbInterface
     $table = (defined(static::class . '::TABLE')) ? (static::class)::TABLE : null;
     $table_key = (defined(static::class . '::TABLE_KEY')) ? (static::class)::TABLE_KEY : null;
     $distinct = (isset($option['distinct'])) ? (bool) $option['distinct'] : false;
-    $column_type = $column_value = $column_key = [];
+    $column_value = $column_key = [];
 
     //
 
     if (isset($option['index']))
     {
-      $column_type[] = 'index';
-      $column_value += $option['index'];
+      $column_value['index'] = $option['index'];
     }
 
     //
 
     if (isset($option['index_not']))
     {
-      $column_type[] = 'index_not';
-      $column_value += $option['index_not'];
+      $column_value['index_not'] = $option['index_not'];
     }
 
     //
 
     if (isset($option['index_gt']))
     {
-      $column_type[] = 'index_gt';
-      $column_value += $option['index_gt'];
+      $column_value['index_gt'] = $option['index_gt'];
     }
 
     //
 
     if (isset($option['index_lt']))
     {
-      $column_type[] = 'index_lt';
-      $column_value += $option['index_lt'];
+      $column_value['index_lt'] = $option['index_lt'];
     }
 
     //
 
     if (isset($option['search']))
     {
-      $column_type[] = 'search';
-      $column_value += $option['search'];
+      $column_value['search'] = $option['search'];
     }
 
     //
 
     if (isset($option['filter']))
     {
-      $column_type[] = 'filter';
-      $column_value += $option['filter'];
+      $column_value['filter'] = $option['filter'];
     }
 
     //
 
     if (isset($option['join']))
     {
-      $column_type[] = 'join';
-      $column_value += $option['join'];
+      $column_value['join'] = $option['join'];
     }
 
     //
 
     if ($column_value !== [])
     {
-      $column_key = &self::column($column_type, $column, $column_value, $table, $table_key);
+      $column_key = &self::column($column, $column_value, $table, $table_key);
     }
 
     //
@@ -395,7 +386,6 @@ class SimpleDb implements SimpleDbInterface
     $search = (isset($column_key['search'])) ? ' AND (' . $column_key['search'] . ')' : '';
     $filter = (isset($column_key['filter'])) ? ' AND ' . $column_key['filter'] : '';
     $join = (isset($column_key['join'])) ? ' ' . $column_key['join'] : '';
-    $join = ($distinct === true && isset($table) && isset($table_key)) ? ' INNER JOIN (SELECT ' . $table . '.' . $table_key . ' FROM' . $join . ' GROUP BY ' . $table . '.' . $table_key . ') self_join_' . $table . ' ON ' . $table . '.' . $table_key . ' = self_join_' . $table . '.' . $table_key : $join;
     $statement = $return_value = null;
 
     //
@@ -404,7 +394,17 @@ class SimpleDb implements SimpleDbInterface
     {
       if ($index !== '' || $search !== '' || $filter !== '')
       {
-        $statement = $pdo->prepare('SELECT COUNT(*) AS total FROM ' . $table . $join . ' WHERE TRUE' . $index . $search . $filter);
+        if ($distinct === true)
+        {
+          $statement = $pdo->prepare('SELECT COUNT(*) AS total FROM ' . $table . ' WHERE ' . $table . '.' . $table_key . ' IN (SELECT ' . $table . '.' . $table_key . ' FROM ' . $table . $join . ' WHERE TRUE' . $index . $search . $filter . ' GROUP BY ' . $table . '.' . $table_key . ')');
+        }
+        else
+        {
+          $statement = $pdo->prepare('SELECT COUNT(*) AS total FROM ' . $table . $join . ' WHERE TRUE' . $index . $search . $filter);
+        }
+
+        //
+
         $statement->execute($column_key['value']);
       }
       else
@@ -439,7 +439,7 @@ class SimpleDb implements SimpleDbInterface
     {
       throw new \InvalidArgumentException('File does not exist: ' . $file);
     }
-    elseif ($type !== 'save' || $type !== 'edit' || $type !== 'remove')
+    elseif ($type !== 'save' && $type !== 'edit' && $type !== 'remove')
     {
       throw new \InvalidArgumentException('Type must be save, edit, or remove: ' . $type);
     }
@@ -550,7 +550,18 @@ class SimpleDb implements SimpleDbInterface
 
   //
 
-  private static function &column(array &$type, array &$column, array &$column_value, ?string $table = null, ?string $table_key = null): array
+  private static function getKey(string $str, string $delimiter, bool $before = true): string
+  {
+    $key = strstr($str, $delimiter, $before);
+
+    //
+
+    return (($key === false) ? $str : $key);
+  }
+
+  //
+
+  private static function &column(array &$column, array &$column_value, ?string $table = null, ?string $table_key = null): array
   {
     $arr = [];
     $index_value = '';
@@ -558,9 +569,9 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    foreach ($column_value as $key => &$value)
+    foreach ($column_value as $type_value => &$column_type)
     {
-      foreach ($type as $type_value)
+      foreach ($column_type as $key => &$value)
       {
         if (!isset($column[$key]))
         {
@@ -568,7 +579,7 @@ class SimpleDb implements SimpleDbInterface
         }
         elseif (!isset($column[$key][$type_value]))
         {
-          throw new \InvalidArgumentException('Column type not found: ' . $type_value);
+          continue;
         }
         elseif ($column[$key][$type_value] !== true)
         {
@@ -688,7 +699,7 @@ class SimpleDb implements SimpleDbInterface
             if (is_string($value) && trim($value) !== '' && (strtoupper($value) === 'INNER' || strtoupper($value) === 'LEFT') && isset($table) && isset($table_key))
             {
               if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($join_count === 0) ? '' : ' ') . $value . ' JOIN ' . strtok($key, '__') . ' ON ' . $table . '.' . $table_key . ' = ' . self::replaceKey($key);
+              $arr[$type_value] .= (($join_count === 0) ? '' : ' ') . $value . ' JOIN ' . self::getKey($key, '__') . ' ON ' . $table . '.' . $table_key . ' = ' . self::replaceKey($key);
               $join_count++;
             }
             else
