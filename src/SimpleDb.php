@@ -24,14 +24,14 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table) && isset($column_key['allowed_keys']) && isset($column_key['allowed_values']))
+    if ($table !== null && isset($column_key['allowed_keys']) && isset($column_key['allowed_values']))
     {
       $statement = $pdo->prepare('INSERT INTO ' . $table . ' (' . $column_key['allowed_keys'] . ') VALUES (' . $column_key['allowed_values'] . ')');
       $statement->execute($column_key['value']);
 
       // get last inserted id for auto increment
 
-      if (isset($table_seq))
+      if ($table_seq !== null)
       {
         $this->setId((int) $pdo->lastInsertId(($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql') ? $table_seq : null));
       }
@@ -49,7 +49,7 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table) && isset($column_key['key']) && isset($column_key['allowed']))
+    if ($table !== null && isset($column_key['key']) && isset($column_key['allowed']))
     {
       $statement = $pdo->prepare('UPDATE ' . $table . ' SET ' . $column_key['allowed'] . ' WHERE ' . $column_key['key']);
       $statement->execute($column_key['value']);
@@ -67,7 +67,7 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table) && isset($column_key['key']))
+    if ($table !== null && isset($column_key['key']))
     {
       $statement = $pdo->prepare('DELETE FROM ' . $table . ' WHERE ' . $column_key['key']);
       $statement->execute($column_key['value']);
@@ -111,7 +111,7 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table) && isset($column_key['index']))
+    if ($table !== null && isset($column_key['index']))
     {
       $statement = $pdo->prepare('SELECT ' . $table . '.* FROM ' . $table . $join . ' WHERE ' . $column_key['index'] . ' LIMIT 1');
       $statement->execute($column_key['value']);
@@ -119,7 +119,7 @@ class SimpleDb implements SimpleDbInterface
 
       //
 
-      return ((isset($return_object) && $return_object !== false) ? $return_object : null);
+      return (($return_object !== null && $return_object !== false) ? $return_object : null);
     }
     else
     {
@@ -214,7 +214,7 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table))
+    if ($table !== null)
     {
       if ($index !== '' || $search !== '' || $filter !== '')
       {
@@ -249,7 +249,7 @@ class SimpleDb implements SimpleDbInterface
 
       //
 
-      $return_object = ((isset($return_object) && $return_object !== false && $return_object !== []) ? $return_object : null);
+      $return_object = (($return_object !== null && $return_object !== false && $return_object !== []) ? $return_object : null);
 
       //
 
@@ -298,7 +298,7 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table) && isset($column_key['index']))
+    if ($table !== null && isset($column_key['index']))
     {
       $statement = $pdo->prepare('SELECT 1 FROM ' . $table . $join . ' WHERE ' . $column_key['index'] . ' LIMIT 1');
       $statement->execute($column_key['value']);
@@ -306,7 +306,7 @@ class SimpleDb implements SimpleDbInterface
 
       //
 
-      return ((isset($return_value) && $return_value !== false) ? (bool) $return_value : false);
+      return (($return_value !== null && $return_value !== false) ? (bool) $return_value : false);
     }
     else
     {
@@ -390,7 +390,7 @@ class SimpleDb implements SimpleDbInterface
 
     //
 
-    if (isset($table))
+    if ($table !== null)
     {
       if ($index !== '' || $search !== '' || $filter !== '')
       {
@@ -418,7 +418,7 @@ class SimpleDb implements SimpleDbInterface
 
       //
 
-      return ((isset($return_value) && $return_value !== false) ? (int) $return_value : 0);
+      return (($return_value !== null && $return_value !== false) ? (int) $return_value : 0);
     }
     else
     {
@@ -571,158 +571,154 @@ class SimpleDb implements SimpleDbInterface
 
     foreach ($column_value as $type_value => &$column_type)
     {
-      foreach ($column_type as $key => &$value)
+      if (is_array($column_type))
       {
-        if (!isset($column[$key]))
+        foreach ($column_type as $key => &$value)
         {
-          throw new \InvalidArgumentException('Column key not found: ' . $key);
-        }
-        elseif (!isset($column[$key][$type_value]))
-        {
-          continue;
-        }
-        elseif ($column[$key][$type_value] !== true)
-        {
-          continue;
-        }
-        else
-        {
-          if (!isset($value))
+          if (!isset($column[$key]))
           {
-            $value = null;
+            throw new \InvalidArgumentException('Column key not found: ' . $key);
           }
-
-          //
-
-          if ($type_value === 'key')
+          elseif (!isset($column[$key][$type_value]))
           {
-            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value))
-            {
-              if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($key_count === 0) ? '' : ' AND ') . $key . ' = :' . $key;
-              $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
-              $key_count++;
-            }
-            else
-            {
-              continue;
-            }
+            continue;
           }
-          elseif ($type_value === 'index' || $type_value === 'index_not' || $type_value === 'index_gt' || $type_value === 'index_lt')
+          elseif ($column[$key][$type_value] !== true)
           {
-            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value))
-            {
-              if ($type_value === 'index') $index_value = '';
-              if ($type_value === 'index_not') $index_value = '!';
-              if ($type_value === 'index_gt') $index_value = '>';
-              if ($type_value === 'index_lt') $index_value = '<';
-              if (!isset($arr['index'])) $arr['index'] = null;
-              $arr['index'] .= (($index_count === 0) ? '' : ' AND ') . self::replaceKey($key) . ' ' . $index_value . '= :' . $key;
-              $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
-              $index_count++;
-            }
-            else
-            {
-              continue;
-            }
-          }
-          elseif ($type_value === 'allowed')
-          {
-            if (is_string($value) || is_int($value) || is_float($value) || is_bool($value) || is_null($value))
-            {
-              if (is_string($value) && (trim($value) === '' || trim($value) === '0'))
-              {
-                $value = null;
-              }
-
-              //
-
-              if ((is_int($value) || is_float($value)) && !($value >= 0))
-              {
-                $value = null;
-              }
-
-              //
-
-              if (!isset($column[$key]['key']) || $column[$key]['key'] !== true)
-              {
-                if (!isset($arr[$type_value])) $arr[$type_value] = null;
-                $arr[$type_value] .= (($allowed_edit_count === 0) ? '' : ', ') . $key . ' = :' . $key;
-                $allowed_edit_count++;
-              }
-
-              //
-
-              if (!isset($arr['allowed_keys'])) $arr['allowed_keys'] = null;
-              if (!isset($arr['allowed_values'])) $arr['allowed_values'] = null;
-              $arr['allowed_keys'] .= (($allowed_insert_count === 0) ? '' : ', ') . $key;
-              $arr['allowed_values'] .= (($allowed_insert_count === 0) ? '' : ', ') . ':' . $key;
-              $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
-              $allowed_insert_count++;
-            }
-            else
-            {
-              continue;
-            }
-          }
-          elseif ($type_value === 'search')
-          {
-            if (is_string($value) && trim($value) !== '')
-            {
-              $value = self::escapeSearch($value) . '%';
-              if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($search_count === 0) ? '' : ' OR ') . self::replaceKey($key) . ' LIKE = :' . $key;
-              $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
-              $search_count++;
-            }
-            else
-            {
-              continue;
-            }
-          }
-          elseif ($type_value === 'filter')
-          {
-            if (is_array($value))
-            {
-              $in_val = self::arrayToInt($value);
-              if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($filter_count === 0) ? '' : ' AND ') . self::replaceKey($key) . ' IN (' . (($in_val !== '') ? $in_val : '0') . ')';
-              $filter_count++;
-            }
-            else
-            {
-              continue;
-            }
-          }
-          elseif ($type_value === 'join')
-          {
-            if (is_string($value) && trim($value) !== '' && (strtoupper($value) === 'INNER' || strtoupper($value) === 'LEFT') && isset($table) && isset($table_key))
-            {
-              if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($join_count === 0) ? '' : ' ') . $value . ' JOIN ' . self::getKey($key, '__') . ' ON ' . $table . '.' . $table_key . ' = ' . self::replaceKey($key);
-              $join_count++;
-            }
-            else
-            {
-              continue;
-            }
-          }
-          elseif ($type_value === 'order_by')
-          {
-            if (is_string($value) && (strtoupper($value) === 'ASC' || strtoupper($value) === 'DESC'))
-            {
-              if (!isset($arr[$type_value])) $arr[$type_value] = null;
-              $arr[$type_value] .= (($order_by_count === 0) ? '' : ', ') . self::replaceKey($key) . ' IS NULL, ' . self::replaceKey($key) . ' ' . strtoupper($value);
-              $order_by_count++;
-            }
-            else
-            {
-              continue;
-            }
+            continue;
           }
           else
           {
-            continue;
+            if ($type_value === 'key')
+            {
+              if (is_string($value) || is_int($value) || is_float($value) || is_bool($value))
+              {
+                if (!isset($arr[$type_value])) $arr[$type_value] = null;
+                $arr[$type_value] .= (($key_count === 0) ? '' : ' AND ') . $key . ' = :' . $key;
+                $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
+                $key_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            elseif ($type_value === 'index' || $type_value === 'index_not' || $type_value === 'index_gt' || $type_value === 'index_lt')
+            {
+              if (is_string($value) || is_int($value) || is_float($value) || is_bool($value))
+              {
+                if ($type_value === 'index') $index_value = '';
+                if ($type_value === 'index_not') $index_value = '!';
+                if ($type_value === 'index_gt') $index_value = '>';
+                if ($type_value === 'index_lt') $index_value = '<';
+                if (!isset($arr['index'])) $arr['index'] = null;
+                $arr['index'] .= (($index_count === 0) ? '' : ' AND ') . self::replaceKey($key) . ' ' . $index_value . '= :' . $key;
+                $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
+                $index_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            elseif ($type_value === 'allowed')
+            {
+              if (is_string($value) || is_int($value) || is_float($value) || is_bool($value) || is_null($value))
+              {
+                if (is_string($value) && (trim($value) === '' || trim($value) === '0'))
+                {
+                  $value = null;
+                }
+
+                //
+
+                if ((is_int($value) || is_float($value)) && !($value >= 0))
+                {
+                  $value = null;
+                }
+
+                //
+
+                if (!isset($column[$key]['key']) || $column[$key]['key'] !== true)
+                {
+                  if (!isset($arr[$type_value])) $arr[$type_value] = null;
+                  $arr[$type_value] .= (($allowed_edit_count === 0) ? '' : ', ') . $key . ' = :' . $key;
+                  $allowed_edit_count++;
+                }
+
+                //
+
+                if (!isset($arr['allowed_keys'])) $arr['allowed_keys'] = null;
+                if (!isset($arr['allowed_values'])) $arr['allowed_values'] = null;
+                $arr['allowed_keys'] .= (($allowed_insert_count === 0) ? '' : ', ') . $key;
+                $arr['allowed_values'] .= (($allowed_insert_count === 0) ? '' : ', ') . ':' . $key;
+                $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
+                $allowed_insert_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            elseif ($type_value === 'search')
+            {
+              if (is_string($value) && trim($value) !== '')
+              {
+                $value = self::escapeSearch($value) . '%';
+                if (!isset($arr[$type_value])) $arr[$type_value] = null;
+                $arr[$type_value] .= (($search_count === 0) ? '' : ' OR ') . self::replaceKey($key) . ' LIKE = :' . $key;
+                $arr['value'][$key] = (is_bool($value)) ? self::setBoolean($value) : $value;
+                $search_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            elseif ($type_value === 'filter')
+            {
+              if (is_array($value))
+              {
+                $in_val = self::arrayToInt($value);
+                if (!isset($arr[$type_value])) $arr[$type_value] = null;
+                $arr[$type_value] .= (($filter_count === 0) ? '' : ' AND ') . self::replaceKey($key) . ' IN (' . (($in_val !== '') ? $in_val : '0') . ')';
+                $filter_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            elseif ($type_value === 'join')
+            {
+              if (is_string($value) && trim($value) !== '' && (strtoupper($value) === 'INNER' || strtoupper($value) === 'LEFT') && $table !== null && $table_key !== null)
+              {
+                if (!isset($arr[$type_value])) $arr[$type_value] = null;
+                $arr[$type_value] .= (($join_count === 0) ? '' : ' ') . $value . ' JOIN ' . self::getKey($key, '__') . ' ON ' . $table . '.' . $table_key . ' = ' . self::replaceKey($key);
+                $join_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            elseif ($type_value === 'order_by')
+            {
+              if (is_string($value) && (strtoupper($value) === 'ASC' || strtoupper($value) === 'DESC'))
+              {
+                if (!isset($arr[$type_value])) $arr[$type_value] = null;
+                $arr[$type_value] .= (($order_by_count === 0) ? '' : ', ') . self::replaceKey($key) . ' IS NULL, ' . self::replaceKey($key) . ' ' . strtoupper($value);
+                $order_by_count++;
+              }
+              else
+              {
+                continue;
+              }
+            }
+            else
+            {
+              continue;
+            }
           }
         }
       }
